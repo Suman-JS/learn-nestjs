@@ -14,7 +14,7 @@ import {
 
 import { CreatePostDto } from "@/posts/dto/create-post.dto";
 import { UpdatePostDto } from "@/posts/dto/update-post.dto";
-import { Post as PostType } from "@/posts/interfaces/post.interface";
+import { PostExistsPipe } from "@/posts/pipes/post-exists.pipe";
 import { PostsService } from "@/posts/posts.service";
 
 @Controller("posts")
@@ -22,30 +22,24 @@ export class PostsController {
   constructor(private readonly postService: PostsService) {}
 
   @Get("")
-  findAll(@Query("query") query?: string): PostType[] {
-    const posts = this.postService.findAll();
-
-    if (!query) return posts;
-
-    return posts.filter((post) =>
-      post.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
-    );
+  async findAll(@Query("query") query?: string) {
+    return this.postService.findAll(query);
   }
 
   @Get(":id")
-  findOne(@Param("id", ParseIntPipe) id: number) {
+  findOne(@Param("id", ParseIntPipe, PostExistsPipe) id: number) {
     return this.postService.findOne(id);
   }
 
   @Post("")
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() postData: CreatePostDto): PostType {
+  async create(@Body() postData: CreatePostDto) {
     return this.postService.create(postData);
   }
 
   @Patch(":id")
-  update(
-    @Param("id", ParseIntPipe) id: number,
+  async update(
+    @Param("id", ParseIntPipe, PostExistsPipe) id: number,
     @Body() updateData: UpdatePostDto,
   ) {
     return this.postService.update(id, updateData);
@@ -53,7 +47,7 @@ export class PostsController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param("id", ParseIntPipe) id: number) {
+  async remove(@Param("id", ParseIntPipe, PostExistsPipe) id: number) {
     return this.postService.remove(id);
   }
 }
