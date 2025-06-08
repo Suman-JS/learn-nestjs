@@ -17,6 +17,9 @@ export const envSchema = z.object({
   DB_ADMIN_USER: z.string().email(),
   DB_ADMIN_PASSWORD: z.string(),
   DB_ADMIN_PORT: z.coerce.number(),
+  PASSWORD_SECRET: z.string(),
+  JWT_ACCESS_TOKEN_SECRET: z.string(),
+  JWT_REFRESH_TOKEN_SECRET: z.string(),
 });
 
 export type EnvVariables = z.infer<typeof envSchema>;
@@ -28,9 +31,10 @@ if (!result.success) {
   process.exit(1);
 }
 
-const env = result.data;
-
-export { env };
+/**
+ * ONLY USE IN OUTSIDE THE NEST.JS
+ */
+export const ONLY_USE_OUTSIDE_NEST_ENV = result.data;
 
 export const validateEnv = (config: Record<string, unknown>) => {
   const result = envSchema.safeParse(config);
