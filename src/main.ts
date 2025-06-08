@@ -1,7 +1,7 @@
-import { ValidationPipe } from "@nestjs/common";
+import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
-import { env } from "@/env";
+import { ONLY_USE_OUTSIDE_NEST_SERVICE_ENV } from "@/env";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -16,6 +16,17 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(env.PORT);
+  app.enableCors({
+    origin: "*",
+  });
+
+  app.setGlobalPrefix("v1");
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    prefix: "v",
+  });
+
+  await app.listen(ONLY_USE_OUTSIDE_NEST_SERVICE_ENV.PORT);
 }
 bootstrap();
