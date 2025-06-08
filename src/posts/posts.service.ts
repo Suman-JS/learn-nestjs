@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ILike, Repository } from "typeorm";
 
+import { User, UserRole } from "@/auth/entities/user.entity";
 import { CreatePostDto } from "@/posts/dto/create-post.dto";
 import { UpdatePostDto } from "@/posts/dto/update-post.dto";
 import { Post } from "@/posts/entities/post.entity";
@@ -14,9 +19,12 @@ export class PostsService {
 
   async findAll(query: string | undefined): Promise<Post[]> {
     if (!query) {
-      return this.postRepository.find();
+      return this.postRepository.find({
+        relations: ["authorName"],
+      });
     }
     return this.postRepository.find({
+      relations: ["authorName"],
       where: [
         {
           title: ILike(`%${query}%`),
@@ -29,8 +37,11 @@ export class PostsService {
   }
 
   async findOne(id: number): Promise<Post> {
-    const post = await this.postRepository.findOneBy({
-      id,
+    const post = await this.postRepository.findOne({
+      relations: ["authorName"],
+      where: {
+        id,
+      },
     });
 
     if (!post) {
@@ -39,18 +50,33 @@ export class PostsService {
     return post;
   }
 
-  async create(postDate: CreatePostDto): Promise<Post> {
+  async create(postDate: CreatePostDto, authorName: User): Promise<Post> {
     const newPost = this.postRepository.create({
       title: postDate.title,
       content: postDate.content,
-      authorName: postDate.authorName,
+      authorName,
     });
 
     return this.postRepository.save(newPost);
   }
 
-  async update(id: number, updateData: UpdatePostDto): Promise<Post> {
+  async update({
+    id,
+    updateData,
+    user,
+  }: {
+    id: number;
+    updateData: UpdatePostDto;
+    user: User;
+  }): Promise<Post> {
     const findPostToUpdate = await this.findOne(id);
+
+    if (
+      findPostToUpdate.authorName.id !== user.id &&
+      user.role !== UserRole.ADMIN
+    ) {
+      throw new ForbiddenException("You can only update your own posts");
+    }
 
     if (updateData.title) {
       findPostToUpdate.title = updateData.title;
@@ -63,9 +89,14 @@ export class PostsService {
     return this.postRepository.save(findPostToUpdate);
   }
 
-  async remove(id: number) {
+  async remove(id: number, user: User) {
     const postToDelete = await this.findOne(id);
 
+    if (postToDelete.authorName.id !== user.id && user.role === UserRole.USER) {
+      throw new ForbiddenException(
+        "You don't have the permission the delete the post.",
+      );
+    }
     await this.postRepository.remove(postToDelete);
   }
 }

@@ -10,8 +10,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from "@nestjs/common";
 
+import { CurrentUser } from "@/auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { CreatePostDto } from "@/posts/dto/create-post.dto";
 import { UpdatePostDto } from "@/posts/dto/update-post.dto";
 import { PostExistsPipe } from "@/posts/pipes/post-exists.pipe";
@@ -33,21 +36,28 @@ export class PostsController {
 
   @Post("")
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() postData: CreatePostDto) {
-    return this.postService.create(postData);
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() postData: CreatePostDto, @CurrentUser() user: any) {
+    return this.postService.create(postData, user);
   }
 
   @Patch(":id")
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param("id", ParseIntPipe, PostExistsPipe) id: number,
     @Body() updateData: UpdatePostDto,
+    @CurrentUser() user: any,
   ) {
-    return this.postService.update(id, updateData);
+    return this.postService.update({ id, updateData, user });
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param("id", ParseIntPipe, PostExistsPipe) id: number) {
-    return this.postService.remove(id);
+  @UseGuards(JwtAuthGuard)
+  async remove(
+    @Param("id", ParseIntPipe, PostExistsPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    return this.postService.remove(id, user);
   }
 }
