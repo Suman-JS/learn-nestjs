@@ -1,83 +1,71 @@
-import {
-  CreatePost,
-  Post,
-  UpdatePost,
-} from "@/posts/interfaces/post.interface";
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { ILike, Repository } from "typeorm";
+
+import { CreatePostDto } from "@/posts/dto/create-post.dto";
+import { UpdatePostDto } from "@/posts/dto/update-post.dto";
+import { Post } from "@/posts/entities/post.entity";
 
 @Injectable()
 export class PostsService {
-  private posts: Post[] = [
-    {
-      id: 1,
-      title: "First post",
-      authorName: "Suman",
-      content: "First post content",
-      createdAt: new Date(),
-    },
-  ];
+  constructor(
+    @InjectRepository(Post) private postRepository: Repository<Post>,
+  ) {}
 
-  findAll(): Post[] {
-    return this.posts;
+  async findAll(query: string | undefined): Promise<Post[]> {
+    if (!query) {
+      return this.postRepository.find();
+    }
+    return this.postRepository.find({
+      where: [
+        {
+          title: ILike(`%${query}%`),
+        },
+        {
+          content: ILike(`%${query}%`),
+        },
+      ],
+    });
   }
 
-  findOne(id: number): Post {
-    const post = this.posts.find((post) => post.id === id);
+  async findOne(id: number): Promise<Post> {
+    const post = await this.postRepository.findOneBy({
+      id,
+    });
 
     if (!post) {
-      throw new NotFoundException(`Post with the id: ${id} does not exists`);
+      throw new NotFoundException(`Post with the id: ${id} does not exist`);
     }
     return post;
   }
 
-  create(postDate: CreatePost): Post {
-    const newPost: Post = {
-      id: this.getNextId(),
-      ...postDate,
-      createdAt: new Date(),
-    };
+  async create(postDate: CreatePostDto): Promise<Post> {
+    const newPost = this.postRepository.create({
+      title: postDate.title,
+      content: postDate.content,
+      authorName: postDate.authorName,
+    });
 
-    this.posts.push(newPost);
-    return newPost;
+    return this.postRepository.save(newPost);
   }
 
-  update(id: number, updateData: UpdatePost): Post {
-    const currentPostIndexToBeEdited = this.posts.findIndex(
-      (post) => post.id === id,
-    );
+  async update(id: number, updateData: UpdatePostDto): Promise<Post> {
+    const findPostToUpdate = await this.findOne(id);
 
-    if (currentPostIndexToBeEdited === -1) {
-      throw new NotFoundException(`Post with id: ${id} not found`);
+    if (updateData.title) {
+      findPostToUpdate.title = updateData.title;
     }
 
-    const definedData = Object.fromEntries(
-      Object.entries(updateData).filter(([_, value]) => value !== undefined),
-    );
-
-    this.posts[currentPostIndexToBeEdited] = {
-      ...this.posts[currentPostIndexToBeEdited],
-      ...definedData,
-      updatedAt: new Date(),
-    };
-
-    return this.posts[currentPostIndexToBeEdited];
-  }
-
-  remove(id: number) {
-    const currentPostIndex = this.posts.findIndex((post) => post.id === id);
-
-    if (currentPostIndex === -1) {
-      throw new NotFoundException(`Post with id: ${id} not found`);
+    if (updateData.content) {
+      findPostToUpdate.content = updateData.content;
     }
 
-    this.posts.splice(currentPostIndex, 1);
-
-    return;
+    return this.postRepository.save(findPostToUpdate);
   }
 
-  private getNextId(): number {
-    return this.posts.length > 0
-      ? Math.max(...this.posts.map((post) => post.id)) + 1
-      : 1;
+  async remove(id: number) {
+    const postToDelete = await this.findOne(id);
+
+    await this.postRepository.remove(postToDelete);
   }
 }
