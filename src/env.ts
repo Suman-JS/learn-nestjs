@@ -4,10 +4,19 @@ import { z } from "zod";
 config();
 
 export const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "production"]).default("development"),
   APP_NAME: z.string({
     message: "APP_NAME is required",
   }),
   PORT: z.coerce.number(),
+  DB_HOST: z.string(),
+  DB_PORT: z.coerce.number(),
+  DB_USERNAME: z.string(),
+  DB_PASSWORD: z.string(),
+  DB_NAME: z.string(),
+  DB_ADMIN_USER: z.string().email(),
+  DB_ADMIN_PASSWORD: z.string(),
+  DB_ADMIN_PORT: z.coerce.number(),
 });
 
 export type EnvVariables = z.infer<typeof envSchema>;
