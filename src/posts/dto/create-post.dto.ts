@@ -16,6 +16,6 @@ export class CreatePostDto {
   @IsNotEmpty({ message: "Author is required" })
   @IsString({ message: "Author must be a string" })
   @MinLength(2, { message: "Author must be at least 2 characters long" })
-  @MaxLength(50, { message: "Content cannot be longer then 50 characters" })
+  @MaxLength(50, { message: "Author cannot be longer then 50 characters" })
   authorName: string;
 }
