@@ -34,7 +34,7 @@ if (!result.success) {
 /**
  * ONLY USE IN OUTSIDE THE NEST.JS
  */
-export const ONLY_USE_OUTSIDE_NEST_ENV = result.data;
+export const ONLY_USE_OUTSIDE_NEST_SERVICE_ENV = result.data;
 
 export const validateEnv = (config: Record<string, unknown>) => {
   const result = envSchema.safeParse(config);
