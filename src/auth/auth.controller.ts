@@ -13,8 +13,9 @@ import { CurrentUser } from "@/auth/decorators/current-user.decorator";
 import { Roles } from "@/auth/decorators/roles.decorator";
 import { LoginDto } from "@/auth/dto/login.dto";
 import { RegisterDto } from "@/auth/dto/register.dto";
-import { UserRole } from "@/auth/entities/user.entity";
+import { User, UserRole } from "@/auth/entities/user.entity";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
+import { LoginThrottlerGuard } from "@/auth/guards/login-throttler.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 
 @Controller("auth")
@@ -28,6 +29,7 @@ export class AuthController {
   }
 
   @Post("login")
+  @UseGuards(LoginThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -41,7 +43,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get("profile")
-  getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: User) {
     return user;
   }
 

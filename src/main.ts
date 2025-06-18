@@ -1,11 +1,15 @@
 import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
+import { AppModule } from "@/app.module";
+import { LoginInterceptor } from "@/common/interceptors/login.interceptor";
 import { ONLY_USE_OUTSIDE_NEST_SERVICE_ENV } from "@/env";
-import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // const logger = new Logger("Bootstrap");
+  const app = await NestFactory.create(AppModule, {
+    logger: ["error", "warn", "log", "debug", "fatal", "verbose"],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -27,6 +31,10 @@ async function bootstrap() {
     prefix: "v",
   });
 
+  app.useGlobalInterceptors(new LoginInterceptor());
+
   await app.listen(ONLY_USE_OUTSIDE_NEST_SERVICE_ENV.PORT);
 }
-bootstrap();
+bootstrap()
+  .then(() => {})
+  .catch(console.error);

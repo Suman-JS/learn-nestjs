@@ -14,8 +14,10 @@ import {
 } from "@nestjs/common";
 
 import { CurrentUser } from "@/auth/decorators/current-user.decorator";
+import { User } from "@/auth/entities/user.entity";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { CreatePostDto } from "@/posts/dto/create-post.dto";
+import { FindPostsQueryDto } from "@/posts/dto/find-post-query.dto";
 import { UpdatePostDto } from "@/posts/dto/update-post.dto";
 import { PostExistsPipe } from "@/posts/pipes/post-exists.pipe";
 import { PostsService } from "@/posts/posts.service";
@@ -25,7 +27,7 @@ export class PostsController {
   constructor(private readonly postService: PostsService) {}
 
   @Get("")
-  async findAll(@Query("query") query?: string) {
+  async findAll(@Query("query") query: FindPostsQueryDto) {
     return this.postService.findAll(query);
   }
 
@@ -37,7 +39,7 @@ export class PostsController {
   @Post("")
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtAuthGuard)
-  async create(@Body() postData: CreatePostDto, @CurrentUser() user: any) {
+  async create(@Body() postData: CreatePostDto, @CurrentUser() user: User) {
     return this.postService.create(postData, user);
   }
 
@@ -46,9 +48,13 @@ export class PostsController {
   async update(
     @Param("id", ParseIntPipe, PostExistsPipe) id: number,
     @Body() updateData: UpdatePostDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
-    return this.postService.update({ id, updateData, user });
+    return this.postService.update({
+      id,
+      updateData,
+      user,
+    });
   }
 
   @Delete(":id")
@@ -56,7 +62,7 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   async remove(
     @Param("id", ParseIntPipe, PostExistsPipe) id: number,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
     return this.postService.remove(id, user);
   }

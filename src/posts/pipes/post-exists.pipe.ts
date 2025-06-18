@@ -11,9 +11,10 @@ import { PostsService } from "@/posts/posts.service";
 export class PostExistsPipe implements PipeTransform {
   constructor(private readonly postService: PostsService) {}
 
-  async transform(value: any, metadata: ArgumentMetadata) {
+  async transform(value: number, _metadata: ArgumentMetadata) {
     try {
       await this.postService.findOne(value);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new NotFoundException(`Post with id: ${value} not found.`);
     }

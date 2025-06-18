@@ -20,6 +20,9 @@ export const envSchema = z.object({
   PASSWORD_SECRET: z.string(),
   JWT_ACCESS_TOKEN_SECRET: z.string(),
   JWT_REFRESH_TOKEN_SECRET: z.string(),
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
 });
 
 export type EnvVariables = z.infer<typeof envSchema>;

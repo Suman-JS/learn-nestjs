@@ -7,6 +7,7 @@ import { User } from "@/auth/entities/user.entity";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { JwtStrategy } from "@/auth/strategies/jwt.strategy";
 import { ConfigWrapperModule } from "@/config/typed-config";
+import { EventsModule } from "@/events/events.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 
@@ -16,6 +17,7 @@ import { AuthService } from "./auth.service";
     ConfigWrapperModule,
     JwtModule.register({}),
     PassportModule,
+    EventsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RolesGuard],

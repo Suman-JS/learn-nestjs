@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test socket.io with Nest.js</title>
+    <style>
+      *,
+      *::after,
+      *::before {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        color-scheme: dark light;
+        background: #0f0d1a;
+        color: white;
+      }
+      main {
+        height: 100dvh;
+        width: 100dvw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        & h1 {
+          font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Oxygen,
+            Ubuntu,
+            Cantarell,
+            "Open Sans",
+            "Helvetica Neue",
+            sans-serif;
+          font-size: 3rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <h1>Using socket.io with Nest.js</h1>
+      <h2>Open Console to check if it works or not</h2>
+    </main>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const socket = io("http://localhost:3001", {
+        transports: ["websocket"],
+      });
+
+      socket.on("connect", () => {
+        console.log("Connected:", socket.id);
+
+        socket.emit("message", { text: "Hello from client" });
+
+        socket.on("message", (data) => {
+          console.log("New message:", data);
+        });
+
+        socket.emit("create_message", { userId: "123", text: "Hello Server!" });
+
+        socket.on("message_created", (data) => {
+          console.log("Server saved message:", data);
+        });
+      });
+    </script>
+  </body>
+</html>

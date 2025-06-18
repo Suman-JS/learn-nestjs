@@ -34,7 +34,7 @@ export class User {
   })
   role: UserRole;
 
-  @OneToMany(() => Post, (post) => post.authorName)
+  @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 
   @CreateDateColumn()

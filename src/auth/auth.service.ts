@@ -1,8 +1,3 @@
-import { LoginDto } from "@/auth/dto/login.dto";
-import { RegisterDto } from "@/auth/dto/register.dto";
-import { User, UserRole } from "@/auth/entities/user.entity";
-import { TypedConfigService } from "@/config/typed-config";
-
 import {
   ConflictException,
   Injectable,
@@ -15,6 +10,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import * as argon2 from "argon2";
 import { Repository } from "typeorm";
 
+import { LoginDto } from "@/auth/dto/login.dto";
+import { RegisterDto } from "@/auth/dto/register.dto";
+import { User, UserRole } from "@/auth/entities/user.entity";
+import { TypedConfigService } from "@/config/typed-config";
+import { UserEventsService } from "@/events/user-events.service";
+
+interface Payload {
+  sub?: number | undefined;
+  iat?: number | undefined;
+  exp?: number | undefined;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -22,6 +29,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private configService: TypedConfigService,
+    private readonly userEventService: UserEventsService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -50,7 +58,10 @@ export class AuthService {
       role: UserRole.USER,
     });
 
-    const { password, ...result } = await this.userRepository.save(newUser);
+    const { password: _password, ...result } =
+      await this.userRepository.save(newUser);
+
+    this.userEventService.emitUserRegistration(newUser);
 
     return {
       user: result,
@@ -84,7 +95,7 @@ export class AuthService {
       role: UserRole.ADMIN,
     });
 
-    const { password, ...result } = await this.userRepository.save(newUser);
+    const { password: _, ...result } = await this.userRepository.save(newUser);
 
     return {
       user: result,
@@ -101,7 +112,7 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException(
-        "This email is not associated with any account, try registering first",
+        "This email is not associated with any account, try registering first.",
       );
     }
 
@@ -114,9 +125,9 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const tokens = await this.generateTokens(user);
+    const tokens = this.generateTokens(user);
 
-    const { password, ...result } = user;
+    const { password: _, ...result } = user;
 
     return {
       user: result,
@@ -126,7 +137,7 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
+      const payload: Payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get("JWT_REFRESH_TOKEN_SECRET"),
       });
 
@@ -146,6 +157,7 @@ export class AuthService {
         accessToken,
       };
     } catch (error) {
+      console.error("error on refresh route ", error);
       throw new UnauthorizedException("Invalid token");
     }
   }
@@ -161,7 +173,7 @@ export class AuthService {
       throw new NotFoundException("User does not exists");
     }
 
-    const { password, ...result } = user;
+    const { password: _, ...result } = user;
     return result;
   }
 
@@ -199,7 +211,7 @@ export class AuthService {
     }
   }
 
-  private async generateTokens(user: User) {
+  private generateTokens(user: User) {
     return {
       accessToken: this.generateAccessToken(user),
       refreshToken: this.generateRefreshToken(user),
@@ -226,7 +238,7 @@ export class AuthService {
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get("JWT_REFRESH_TOKEN_SECRET"),
-      expiresIn: "15m",
+      expiresIn: "15d",
     });
   }
 }
